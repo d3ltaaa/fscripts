@@ -1,5 +1,0 @@
-#!/bin/bash
-
-ollama serve &
-
-firefox localhost:8080
