@@ -1,0 +1,1156 @@
+# menu="dmenu -i -p"
+# menu_alt="dmenu -i -p"
+# notification_normal="dunstify"
+menu="rofi -dmenu -i"
+menu_alt=$menu
+notification_normal="dunstify -u normal"
+notification_urgent="dunstify -u critical"
+
+menu_main() {
+  # Define first layer
+  options=(" Wifi" "󰂯 Bluetooth" "󰕾 Audio" "󰍹 Monitors" "󰓶 Tablet-Mode" " Light" "󰐦 Energy-Mode" " Themes" "  server" "󱊞 USB" " Updates" "󰅙 Close")
+
+  # display options
+  selected=$(printf '%s\n' "${options[@]}" | ${menu} " Settings")
+
+  case $selected in
+  " Wifi")
+    menu_wifi
+    ;;
+  "󰂯 Bluetooth")
+    menu_blue
+    ;;
+  "󰕾 Audio")
+    menu_vol
+    ;;
+  "󰍹 Monitors")
+    menu_mon
+    ;;
+  "󰓶 Tablet-Mode")
+    menu_tablet
+    ;;
+  " Light")
+    menu_light
+    ;;
+  "󰐦 Energy-Mode")
+    menu_energy
+    ;;
+  " Themes")
+    menu_themes
+    ;;
+  "  server")
+    menu_server
+    ;;
+  "󱊞 USB")
+    menu_usb
+    ;;
+  " Updates")
+    menu_updates
+    ;;
+  "󰅙 Close") ;;
+  esac
+}
+
+menu_wifi() {
+
+  connect_to_wifi() {
+    # 0/1 "$wifi_selected"/"$wifi_to_disconnect"
+
+    case $1 in
+    "1")
+      # if wifi_selected is known already
+      if nmcli connection show | grep -q -w "$2"; then
+
+        # if no error pops up while connecting without password
+        nmcli con up "$2" ||
+
+          # try with password
+          password=$(: | ${menu} "󰟵 Password:") &&
+          nmcli d wifi connect "$2" password "$password"
+
+        # if wifi_selected is not known
+      elif [[ ! -z $2 ]]; then
+
+        # try with password
+        password=$(: | ${menu} "󰟵 Password:")
+        nmcli d wifi connect "$2" password "$password"
+      fi
+      ;;
+    "0")
+      nmcli con down "$2"
+      ;;
+    *)
+      echo "Improper use of arguments!"
+      ${notification_normal} "Improper use of arguments"
+      ;;
+    esac
+  }
+
+  list_wifi_devices() {
+
+    # wifi_selected
+
+    # if the list command does work
+    if [[ ! -z "$(nmcli -f SSID dev wifi list)" ]]; then
+      wifi_list="$(nmcli -f SSID dev wifi list | tail -n +2 | awk '{$1=$1};1')"
+      wifi_selected=$(echo -e "  Go back\n$wifi_list" | ${menu_alt})
+      echo "selected wifi: $wifi_selected"
+    fi
+
+    case $wifi_selected in
+    "  Go back")
+      return
+      ;;
+    *)
+
+      connect_to_wifi 1 "$wifi_selected"
+      ;;
+    esac
+
+  }
+
+  turn_wifi_controller() {
+    case $1 in
+    "1")
+      nmcli radio wifi on
+      ;;
+    "0")
+      nmcli radio wifi off
+      ;;
+    *)
+      echo "Wrong use of arguments"
+      ${notification_normal} "Wrong use of arguments"
+      ;;
+    esac
+  }
+
+  remove_wifi_connection() {
+
+    wifi_list="$(nmcli -t -f NAME connection show | awk '{$1=$1};1')"
+    wifi_select=$(echo -e "  Go back\n$wifi_list" | ${menu_alt})
+
+    case $wifi_select in
+    "lo")
+      return
+      ;;
+    "  Go back")
+      return
+      ;;
+    *)
+      nmcli connection delete "$wifi_select"
+      ;;
+    esac
+
+  }
+
+  # get wifi status
+  # connection_lan=$(nmcli -t -f NAME connection show --active | head -n 1)
+  connection_lan=$(nmcli connection show --active | grep ethernet | cut -d' ' -f3)
+  search_for=$(nmcli connection show --active | grep wifi | cut -d' ' -f1)
+  if [ ! -z $search_for ]; then
+    connection_wifi=$(nmcli -t -f NAME connection show --active | grep -w $search_for)
+  else
+    connection_wifi=""
+  fi
+  wifi_status=$(nmcli radio wifi)
+
+  case $connection_lan in
+  "")
+    status_lan="Not connected"
+    ;;
+  *)
+    status_lan="Connection $connection_lan"
+    ;;
+  esac
+
+  case $connection_wifi in
+  "")
+    case $wifi_status in
+    "enabled")
+      status_wifi="Enabled"
+      ;;
+    *)
+      status_wifi="Disabled"
+      ;;
+    esac
+    ;;
+  *)
+    status_wifi="Connected to $connection_wifi"
+    ;;
+  esac
+
+  # options=("Internet ($status)" "Wifi list" "  Go back")
+
+  options=("  Wired - ($status_lan)" "  Wifi - ($status_wifi)" "  Go back")
+
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+  "  Wired - ($status_lan)")
+    menu_wifi
+    ;;
+  "  Wifi - (Enabled)")
+
+    further_options=("  List devices" "  Disable Controller" "  Remove Connection" "  Go back")
+
+    further_selected=$(printf '%s\n' "${further_options[@]}" | ${menu_alt})
+
+    case $further_selected in
+
+    "  List devices")
+      list_wifi_devices
+      menu_wifi
+      ;;
+    "  Disable Controller")
+      turn_wifi_controller 0
+      menu_wifi
+      ;;
+    "  Remove Connection")
+      remove_wifi_connection
+      menu_wifi
+      ;;
+    "  Go back")
+      menu_wifi
+      ;;
+    esac
+    ;;
+  "  Wifi - (Disabled)")
+    further_options=("Enable Controller" "Remove Connection" "  Go back")
+
+    further_selected=$(printf '%s\n' "${further_options[@]}" | ${menu_alt})
+
+    case $further_selected in
+
+    "Enable Controller")
+      turn_wifi_controller 1
+      menu_wifi
+      ;;
+    "Remove Connection")
+      remove_wifi_connection
+      menu_wifi
+      ;;
+    "  Go back")
+      menu_wifi
+      ;;
+    esac
+    ;;
+  "  Wifi - ($status_wifi)")
+
+    further_options=("Disconnect" "Disable Controller" "  Go back")
+
+    further_selected=$(printf '%s\n' "${further_options[@]}" | ${menu_alt})
+
+    case $further_selected in
+
+    "Disconnect")
+      connect_to_wifi 0 "$connection_wifi"
+      menu_wifi
+      ;;
+    "Disable Controller")
+      turn_wifi_controller 0
+      menu_wifi
+      ;;
+    "  Go back")
+      menu_wifi
+      ;;
+    esac
+    ;;
+  "  Go back")
+    menu_main
+    ;;
+  esac
+
+}
+
+menu_blue() {
+  echo "New Bluetooth Menu"
+  bluetoothctl power on
+  bluetoothctl agent on
+
+  options_blue_menu=("󰾰  Show devices" "󰂱  Connect devices" "  Go back")
+
+  selected_blue_menu=$(printf '%s\n' "${options_blue_menu[@]}" | ${menu_alt})
+
+  case $selected_blue_menu in
+
+  "󰾰  Show devices")
+
+    options_show_menu=()
+    devices_scan_list=()
+
+    echo "devices_scan_list"
+    while IFS= read -r line; do
+      echo "Adding: $line|"
+      devices_scan_list+=("$(echo $line | xargs)")
+    done < <(bluetoothctl devices | grep -w Device | cut -d' ' -f 3-)
+
+    # go through devices
+    for ((i = 0; i < "${#devices_scan_list[@]}"; i++)); do
+
+      if bluetoothctl info | grep -w Name | grep "${devices_scan_list[$i]}" || bluetoothctl devices Trusted | grep -w Device | grep "${devices_scan_list[$i]}"; then
+
+        # options_show_menu+=("${devices_scan_list[$i]}")
+
+        connected=false
+        trusted=false
+
+        if bluetoothctl info | grep -w Name | grep "${devices_scan_list[$i]}"; then
+          connected=true
+        fi
+
+        if bluetoothctl devices Trusted | grep -w Device | grep "${devices_scan_list[$i]}"; then
+          trusted=true
+        fi
+
+        if $connected && $trusted; then
+          options_show_menu+=("${devices_scan_list[$i]} (󰂯  Connected, 󰂳  Trusted)")
+        elif ! $connected && $trusted; then
+          options_show_menu+=("${devices_scan_list[$i]} (󰂳  Trusted)")
+        elif $connected && ! $trusted; then
+          options_show_menu+=("${devices_scan_list[$i]} (󰂯  Connected)")
+        fi
+      fi
+
+    done
+
+    options_show_menu+=("  Go back")
+
+    selected_show_menu=$(printf '%s\n' "${options_show_menu[@]}" | ${menu_alt})
+
+    case $selected_show_menu in
+    "  Go back")
+      menu_blue
+      ;;
+    *)
+      case $selected_show_menu in
+      *"(󰂯  Connected, 󰂳  Trusted)"*)
+
+        options_show_connect_trust_menu=("󰂲  Disconnect" "󰂲  Untrust" "  Go back")
+
+        selected_show_connect_trust_menu=$(printf '%s\n' "${options_show_connect_trust_menu[@]}" | ${menu})
+
+        selected_show_detail_menu_for_mac="$(echo $selected_show_menu | cut -d' ' -f1)"
+
+        MAC_select_connect_trust="$(bluetoothctl devices | grep "$selected_show_detail_menu_for_mac" | cut -d' ' -f2)"
+
+        case "$selected_show_connect_trust_menu" in
+        "󰂲  Disconnect")
+          echo "Disconnecting $selected_show_connect_trust_menu ($MAC_select_connect_trust) ..."
+          bluetoothctl disconnect "$MAC_select_connect_trust" && ${notification_normal} "Disconnected $selected_show_connect_trust_menu!" ||
+            ${notification_normal} "Disconnecting failed!"
+          menu_blue
+          ;;
+        "󰂲  Untrust")
+          echo "Untrusting $selected_show_connect_trust_menu  ($MAC_select_connect_trust) ..."
+          bluetoothctl untrust $MAC_select_connect_trust && ${notification_normal} "Untrust $selected_show_connect_trust_menu succeeded!" ||
+            ${notification_normal} "Untrust failed!"
+          menu_blue
+          ;;
+        "  Go back")
+          menu_blue
+          ;;
+        esac
+        ;;
+      *"(󰂯  Connected)"*)
+
+        options_show_connect_menu=("󰂲  Disconnect" "󰂱  Trust" "  Go back")
+
+        selected_show_connect_menu=$(printf '%s\n' "${options_show_connect_menu[@]}" | ${menu})
+
+        selected_show_detail_menu_for_mac=$(echo $selected_show_menu | cut -d' ' -f1)
+
+        MAC_select_connect=$(bluetoothctl devices | grep "$selected_show_detail_menu_for_mac" | cut -d' ' -f2)
+
+        echo $MAC_select_connect
+
+        case $selected_show_connect_menu in
+        "󰂲  Disconnect")
+          echo "Disconnecting $selected_show_connect_menu ($MAC_select_connect) ..."
+          bluetoothctl disconnect "$MAC_select_connect" && ${notification_normal} "Disconnected $selected_show_connect_menu!" ||
+            ${notification_normal} "Disconnecting failed!"
+          menu_blue
+          ;;
+        "󰂱  Trust")
+          echo "Trusting $selected_show_connect_menu ($MAC_select_connect) ..."
+          bluetoothctl trust "$MAC_select" && ${notification_normal} "Trusting $selected_show_connect_menu succeeded!" ||
+            ${notification_normal} "Trusting failed!"
+          menu_blue
+          ;;
+        "  Go back")
+          menu_blue
+          ;;
+        esac
+        ;;
+      *"(󰂳  Trusted)"*)
+
+        options_show_trust_menu=("󰂰  Connect" "󰂲  Untrust" "  Go back")
+
+        selected_show_trust_menu=$(printf '%s\n' "${options_show_trust_menu[@]}" | ${menu} "$selected_show_menu")
+
+        selected_show_detail_menu_for_mac="$(echo $selected_show_menu | cut -d' ' -f1)"
+
+        MAC_select_trust="$(bluetoothctl devices | grep $selected_show_detail_menu_for_mac | cut -d' ' -f2)"
+
+        case "$selected_show_trust_menu" in
+        "󰂰  Connect")
+          echo "Connecting $selected_show_trust_menu ($MAC_select_trust) ..."
+          bluetoothctl connect "$MAC_select_trust" && ${notification_normal} "Connected to $selected_show_trust_menu" ||
+            ${notification_normal} "Connection failed!"
+          menu_blue
+          ;;
+        "󰂲  Untrust")
+          echo "Untrusting $select ($MAC_select_trust) ..."
+          bluetoothctl untrust "$MAC_select_trust" && ${notification_normal} "Untrust successful!" ||
+            ${notification_normal} "Untrust failed!"
+          menu_blue
+          ;;
+        "  Go back")
+          menu_blue
+          ;;
+        esac
+        ;;
+      esac
+
+      ;;
+    esac
+    menu_blue
+    ;;
+
+  "󰂱  Connect devices")
+
+    bluetoothctl --timeout 5 scan on
+
+    # Wait for the background process to finish
+    wait
+
+    available_devices=("  Go back")
+    while IFS= read -r line; do
+      available_devices+=("$line")
+    done < <(bluetoothctl devices | cut -d' ' -f 3-)
+
+    echo "${#available_devices[@]}"
+
+    # add go back option
+    options_connect_menu=()
+
+    for ((i = 0; i < "${#available_devices[@]}"; i++)); do
+
+      if bluetoothctl devices Connected | grep -w Device | grep "${available_devices[$i]}"; then
+
+        echo "${available_devices[$i]} -> ${available_devices[$i]} already connected!"
+
+      else
+
+        if bluetoothctl devices Trusted | grep -w Device | grep "${available_devices[$i]}"; then
+
+          echo "${available_devices[$i]} -> ${available_devices[$i]} not connected but trusted!"
+          options_connect_menu+=("${available_devices[$i]}")
+
+        else
+
+          echo "${available_devices[$i]} (added)"
+          options_connect_menu+=("${available_devices[$i]}")
+        fi
+
+      fi
+
+    done
+
+    selected_connect_menu=$(printf '%s\n' "${options_connect_menu[@]}" | ${menu_alt})
+
+    case $select in
+
+    "  Go back")
+      menu_blue
+      ;;
+    *)
+
+      MAC_select_connect_menu="$(bluetoothctl devices | grep -w "$selected_connect_menu" | cut -d ' ' -f2)"
+
+      if [ ! -z "$MAC_select_connect_menu" ]; then
+        echo "Trying to connect to: $MAC_select_connect_menu"
+        bluetoothctl connect "$MAC_select_connect_menu" && ${notification_normal} "Connected to $selected_connect_menu!" ||
+          ${notification_normal} "Connection failed!"
+      fi
+      menu_blue
+      ;;
+
+    esac
+
+    ;;
+
+  "  Go back")
+    menu_main
+    ;;
+  esac
+
+}
+
+menu_vol() {
+
+  update_variables() {
+
+    sink_amount=$(pulsemixer --list-sinks | grep Sink: | wc -l)
+
+    output=$(pulsemixer --list-sinks | grep Sink: | cut -d',' -f2 | sed 's/^.//' | cut -d' ' -f1 --complement)
+
+    sink_list=()
+
+    for ((i = 1; i <= $sink_amount; i++)); do
+      sink_list+=("$(printf "$output" | awk -v num=$i 'NR==num')")
+    done
+
+  }
+
+  change_output_device() {
+
+    update_variables
+    further_further_options=()
+    further_further_options+=("${sink_list[@]}")
+    further_further_options+=("  Go back")
+
+    further_further_selected=$(printf '%s\n' "${further_further_options[@]}" | ${menu_alt})
+
+    case $further_further_selected in
+    "  Go back")
+      menu_vol
+      ;;
+    *)
+      #get corresponding index
+      index=$(pulsemixer --list-sinks | grep "$further_further_selected" | grep Sink: | awk '{print $3}' | cut -d'-' -f2 | sed 's/,//')
+      pactl set-default-sink $index
+      menu_vol
+      ;;
+    esac
+
+  }
+
+  default_sink=$(pulsemixer --list | grep "Default" | grep "Sink:" | cut -d',' -f2 | sed 's/^.//' | cut -d' ' -f1 --complement)
+
+  if [[ $(pulsemixer --get-mute) -eq 1 ]]; then
+    default_volume="󰸈  "
+  else
+    default_volume="$(pulsemixer --get-volume | awk '{print $1}')%"
+  fi
+
+  options=("󰓃  Output: $default_sink" "  Volume: $default_volume" "󰣆  Applications" "  Go back")
+
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+
+  "󰓃  Output: $default_sink")
+
+    further_options=("󰾰  Change Output device" "  Go back")
+
+    further_selected=$(printf '%s\n' "${further_options[@]}" | ${menu_alt})
+
+    case $further_selected in
+    "󰾰  Change Output device")
+      change_output_device
+      ;;
+    "  Go back")
+      menu_vol
+      ;;
+    esac
+    ;;
+
+  "  Volume: $default_volume")
+
+    further_further_selected=""
+
+    while true; do
+
+      further_further_options=(" " "  " "󰸈  " "  Go back")
+
+      global_volume="$(pulsemixer --get-volume | awk '{print $1}')%"
+      if [[ "$(pulsemixer --get-mute)" == "1" ]]; then
+        global_volume="󰸈  "
+      fi
+      further_further_selected=$(printf '%s\n' "${further_further_options[@]}" | ${menu} "Global: $global_volume")
+
+      case $further_further_selected in
+
+      " ")
+        pulsemixer --change-volume +10
+        ;;
+      "  ")
+        pulsemixer --change-volume -10
+        ;;
+      "󰸈  ")
+        pulsemixer --toggle-mute
+        ;;
+      "  Go back")
+        break
+        ;;
+      esac
+
+    done
+
+    if [[ "$further_further_selected" == "  Go back" ]]; then
+      menu_vol
+    fi
+
+    ;;
+
+  "󰣆  Applications")
+
+    application_amount=$(pulsemixer --list | grep -c "Sink input:")
+    output=($(pulsemixer --list | grep "Sink input:" | cut -d',' -f2 | awk '{print $2}' | sed 's/,//'))
+
+    for element in "${output[@]}"; do
+      # Check if the element is not already in the unique array
+
+      if [[ ! " ${application_list[@]} " =~ " $element " ]]; then
+        application_list+=("$element")
+      fi
+    done
+
+    fff_options=()
+    fff_options+=("${application_list[@]}")
+    fff_options+=("  Go back")
+    fff_selected=$(printf '%s\n' "${fff_options[@]}" | ${menu_alt})
+
+    case $fff_selected in
+    "  Go back")
+      menu_vol
+      ;;
+    *)
+
+      sink_input_id=()
+      sink_input_id=($(pulsemixer --list-sinks | grep "$fff_selected" | grep "sink-input-" | awk '{print $4}' | sed 's/,//'))
+
+      if [[ ${#sink_input_id[@]} -gt 1 ]]; then
+
+        temp_options=(${sink_input_id[@]})
+        temp_options+=("  Go back")
+
+        sink_input_id=""
+        sink_input_id="$(printf '%s\n' "${temp_options[@]}" | ${menu_alt})"
+
+        case $sink_input_id in
+        "  Go back")
+          menu_vol
+          ;;
+        esac
+
+      fi
+
+      while true; do
+
+        ffff_options=(" " "  " "󰸈  " "  Go back")
+
+        # get sink-input-id
+
+        application_volume="$(pulsemixer --id "$sink_input_id" --get-volume | awk '{print $1}')%"
+
+        if [[ "$(pulsemixer --id "$sink_input_id" --get-mute)" == "1" ]]; then
+          application_volume="󰸈  "
+        fi
+
+        ffff_selected=$(printf '%s\n' "${ffff_options[@]}" | ${menu} "$fff_selected: $application_volume")
+
+        case $ffff_selected in
+        "  Go back")
+          break
+          ;;
+        " ")
+          pulsemixer --id "$sink_input_id" --change-volume +10
+          ;;
+        "  ")
+          pulsemixer --id "$sink_input_id" --change-volume -10
+          ;;
+        "󰸈  ")
+          pulsemixer --id "$sink_input_id" --toggle-mute
+          ;;
+        esac
+
+      done
+
+      if [[ "$ffff_selected" == "  Go back" ]]; then
+        menu_vol
+      fi
+
+      ;;
+
+    esac
+
+    ;;
+
+  "  Go back")
+    menu_main
+    ;;
+  esac
+
+}
+
+menu_mon() {
+
+  monitor_count=$(xrandr --listmonitors | awk 'NR==1 {print $2}')
+  monitor_array=($(xrandr | grep -w connected | awk '{print $1}'))
+  echo $monitor_count
+  echo ${monitor_array[0]}
+  echo ${monitor_array[1]}
+  monitor_array+=("Go back")
+
+  options=("Rearrange monitors" "Go back")
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+
+  "Rearrange monitors")
+
+    selected_main=$(printf '%s\n' "${monitor_array[@]}" | ${menu} "Select main")
+
+    if [[ ! "$selected_main" == "Go back" ]]; then
+      # delete main from array
+      monitor_array=("${monitor_array[@]/$selected_main/}")
+      string_command="xrandr --output "
+    fi
+
+    while true; do
+
+      options=("Add another monitor" "Output current configuration" "Go back")
+
+      selected_options=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+      case $selected_options in
+
+      "Add another monitor")
+
+        another_mon=$(printf '%s\n' "${monitor_array[@]}" | ${menu_alt})
+
+        if [[ ! "$another_mon" == "Go back" ]]; then
+
+          monitor_array=("${monitor_array[@]/$another_mon/}")
+        else
+          menu_mon
+        fi
+
+        options_pos=("above" "below" "right-of" "left-of" "Go back")
+
+        next_mon_pos=$(printf '%s\n' "${options_pos[@]}" | ${menu_alt})
+
+        case $next_mon_pos in
+
+        "Go back")
+          menu_mon
+          break
+          ;;
+        *)
+          echo $string_command
+
+          string_command+="$another_mon --$next_mon_pos "
+          echo $string_command
+          # break, since i dont know how to handle three-->what should string_command look like?
+          ;;
+        esac
+
+        ;;
+
+      "Output current configuration")
+        # turn everything else off:
+        new_mon_arr=($(xrandr | grep -w disconnected | awk '{print $1}'))
+        for mon in ${new_mon_arr[@]}; do
+          echo "xrandr --output $mon --off"
+          xrandr --output $mon --off
+        done
+
+        string_command+="$selected_main"
+        $string_command --auto
+        echo $string_command
+        xwallpaper --zoom ~/.config/wall/picture &
+
+        break
+        ;;
+
+      "Go back")
+        menu_mon
+        break
+        ;;
+      esac
+    done
+
+    ;;
+
+  "Go back")
+    menu_main
+    ;;
+  esac
+
+}
+
+menu_tablet() {
+
+  status_kb=$(xinput list-props 12 | grep "Device Enabled" | awk '{print $4}')
+  status_kb_short=""
+  if [[ $status_kb = 1 ]]; then
+    status_kb_short="󰓶  Go Tablet-mode"
+  elif [[ $status_kb = 0 ]]; then
+    status_kb_short="  Go Laptop-mode"
+  fi
+
+  options=("$status_kb_short" "  Go back")
+
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+  $status_kb_short)
+
+    if [[ $status_kb = 1 ]]; then
+      xinput disable 12
+    elif [[ $status_kb = 0 ]]; then
+      xinput enable 12
+    fi
+    ;;
+  "  Go back")
+    menu_options
+    ;;
+  esac
+}
+
+menu_light() {
+  options=("  Brightness" "  Redshift" "  Go back")
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case "$selected" in
+  "  Brightness")
+    while true; do
+      options=("  +10%" "  -10%" "  Max Brightness" "  Lowest Brightness" "  Go back")
+      further_selected=$(printf '%s\n' "${options[@]}" | ${menu} "Brightness:")
+      case "$further_selected" in
+      "  +10%")
+        scr_light up
+        ;;
+      "  -10%")
+        scr_light down
+        ;;
+      "  Max Brightness")
+        scr_light day
+        ;;
+      "  Lowest Brightness")
+        scr_light night
+        ;;
+      "  Go back")
+        break
+        ;;
+      *)
+        echo "Error: Wrong input for src_light!"
+        ;;
+      esac
+    done
+    if [[ $further_selected == "  Go back" ]]; then
+      menu_light
+    fi
+    ;;
+
+  "  Redshift")
+    while true; do
+      options=("  Blue-light-filter on" "  Blue-light-filter off" "  Go back")
+      further_selected=$(printf '%s\n' "${options[@]}" | ${menu} "Blue light:")
+      case "$further_selected" in
+      "  Blue-light-filter off")
+        scr_light blue
+        ;;
+      "  Blue-light-filter on")
+        scr_light red
+        ;;
+      "  Go back")
+        break
+        ;;
+      *)
+        echo "Error: Wrong input for src_light!"
+        ;;
+      esac
+    done
+    if [[ $further_selected == "  Go back" ]]; then
+      menu_light
+    fi
+    ;;
+  "  Go back")
+    menu_options
+    ;;
+  esac
+
+}
+
+menu_energy() {
+  options=("  Reset" "󱧥  Powersave" "󰓅  Performance" "  Go back")
+
+  # Use dmenu to display the options and prompt the user to select one
+  selected=$(printf '%s\n' "${options[@]}" | ${menu})
+
+  # Depending on which option was selected, perform the corresponding system action
+  case $selected in
+  "  Reset") foot -e sudo auto-cpufreq --force reset ;;
+  "󱧥  Powersave") foot -e sudo auto-cpufreq --force powersave ;;
+  "󰓅  Performance") foot -e sudo auto-cpufreq --force performance ;;
+  "  Go back") menu_main ;;
+  esac
+}
+
+menu_themes() {
+  options=("Arch-Dark" "Arch-Light" "Arch-Cyan" "Triangle-Blue" "  Go back")
+  selected=$(printf '%s\n' "${options[@]}" | ${menu} "Select Theme:")
+
+  case $selected in
+  "Arch-Dark")
+    set-arch-dark
+    ;; #
+
+  "Arch-Light")
+    set-arch-light
+    ;;
+
+  "Arch-Cyan")
+    set-arch-cyan
+    ;;
+
+  "Triangle-Blue")
+    set-triangle-blue
+    ;;
+  "  Go back")
+    menu_options
+    ;;
+  esac
+}
+
+menu_server() {
+
+  connection_lan=$(nmcli -t -f NAME connection show --active | head -n 1)
+
+  connection_wifi=$(nmcli radio wifi)
+
+  if [[ $connection_lan == "Wired connection 1" ]]; then
+    status="Enabled - Wired"
+  elif [[ $connection_wifi == "enabled" && $connection_lan == "lo" ]]; then
+    status="Enabled - Not Connected"
+  elif [[ $connection_wifi == "enabled" ]]; then
+    status="Enabled - Connected to $(nmcli -t -f NAME connection show --active | head -n 1)"
+  else
+    status="Disabled"
+  fi
+
+  options=("  Internet ($status)" "  Clients" "  Phone" "  Go back")
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+  "  Internet ($status)")
+    menu_wifi
+    ;;
+
+  "  Clients")
+
+    options_list=($(grep -w Host ~/.ssh/config | awk '{print $2}'))
+    options_list+=("  Go back")
+    selected_list=$(printf '%s\n' "${options_list[@]}" | ${menu_alt})
+
+    case $selected_list in
+    "  Go back")
+      menu_server
+      ;;
+    *)
+      st -e bash -c "
+                    echo Connecting to $selected_list...
+                    ssh $selected_list
+                    "
+      ;;
+    esac
+    ;;
+
+  "  Phone")
+
+    options=("󰋫  Get Remnote images" "󰋫  Get Images" "󰈙  Get Documents" "  Go back")
+    selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+    case $selected in
+
+    "󰋫  Get Remnote images")
+      st -e bash -c "
+                    transfer_from_remote.sh ~/Pictures/Remnote
+                    "
+      ;;
+    "󰋫  Get Images")
+      st -e bash -c "
+                    transfer_from_remote.sh ~/Pictures/Server
+                    "
+      ;;
+    "󰈙  Get Documents")
+      st -e bash -c "
+                    transfer_from_remote.sh ~/Documents
+                    "
+      ;;
+    "  Go back")
+      menu_server
+      ;;
+    esac
+    ;;
+
+  esac
+
+}
+
+menu_usb() {
+
+  #devices found by udisksctl
+  lsblk_print=$(lsblk -no name,type,mountpoints | grep -A1 disk)
+
+  devices=($(lsblk -no name,type | grep disk | awk '{print $1}'))
+
+  mounted_usb_devices=()
+
+  unmounted_usb_devices=()
+
+  usb_devices=()
+
+  for device in "${devices[@]}"; do
+    connection_type=$(lsblk -no tran /dev/$device)
+    is_mounted=$(lsblk -no mountpoints,name | grep $device | awk '{print $2}')
+    if [[ $connection_type == "usb" ]]; then
+
+      usb_devices+=("$device")
+
+      if [[ ! $is_mounted == "" ]]; then
+        mounted_usb_devices+=("$device")
+      else
+        unmounted_usb_devices+=("$device")
+      fi
+
+    fi
+  done
+
+  # Iterate the loop to read and print each array element
+
+  pretty_mounted_names=()
+
+  for value in "${mounted_usb_devices[@]}"; do
+    # get the name of $value
+    properties=$(udevadm info --query=property --name=/dev/$value)
+    vendor=$(echo "$properties" | grep -e "ID_VENDOR=" | awk -F "=" '{print $2}')
+    model=$(echo "$properties" | grep -e "ID_MODEL=" | awk -F "=" '{print $2}')
+    pretty_mounted_names+=("$value -- $vendor $model")
+
+  done
+
+  mounted_usb_names=$(
+    for value in "${pretty_mounted_names[@]}"; do
+      echo $value
+    done
+  )
+
+  pretty_unmounted_names=()
+
+  for value in "${unmounted_usb_devices[@]}"; do
+    # get the name of $value
+    properties=$(udevadm info --query=property --name=/dev/$value)
+    vendor=$(echo "$properties" | grep -e "ID_VENDOR=" | awk -F "=" '{print $2}')
+    model=$(echo "$properties" | grep -e "ID_MODEL=" | awk -F "=" '{print $2}')
+    pretty_unmounted_names+=("$value -- $vendor $model")
+
+  done
+
+  unmounted_usb_names=$(
+    for value in "${pretty_unmounted_names[@]}"; do
+      echo $value
+    done
+  )
+
+  echo "M:${pretty_mounted_names[0]}"
+
+  echo "U:${pretty_unmounted_names[0]}"
+
+  options=("󰕓  Mount" "  Unmount" "  Go back")
+
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  mounted_options=("$mounted_usb_names" "  Go back")
+
+  unmounted_options=("$unmounted_usb_names" "  Go back")
+
+  echo $mounted_options
+
+  echo $unmounted_options
+
+  case $selected in
+  "󰕓  Mount")
+    new_selected=$(printf '%s\n' "${unmounted_options[@]}" | ${menu_alt} | awk '{print $1}')
+    case $new_selected in
+    "  Go back")
+      menu_options usb
+      ;;
+    *)
+      udisksctl mount -b /dev/${new_selected} && ${notification_normal} "$new_selected mounted" || udisksctl mount -b /dev/${new_selected}1 && ${notification_normal} "${new_selected}1 mounted" || ${notification_normal} "Disk probably in use!"
+      ;;
+    esac
+    ;;
+  "  Unmount")
+    new_selected=$(printf '%s\n' "${mounted_options[@]}" | ${menu_alt} | awk '{print $1}')
+    case $new_selected in
+    "  Go back")
+      menu_options usb
+      ;;
+    *)
+      udisksctl unmount -b /dev/${new_selected} && ${notification_normal} "$new_selected unmounted" || udisksctl unmount -b /dev/${new_selected}1 && ${notification_normal} "${new_selected}1 unmounted" || ${notification_normal} "Disk probably in use!"
+      ;;
+    esac
+    ;;
+  "  Go back")
+    menu_options
+    ;;
+  esac
+
+}
+
+menu_updates() {
+
+  updates=$(pacman -Qu | wc -l)
+  options=("Update $updates packages" "  Go back")
+
+  selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
+
+  case $selected in
+  "Update $updates packages")
+    st -e bash -c "
+            sudo pacman --noconfirm -Syu && ${notification_normal} System 'Up to date!'"
+    ;;
+  "  Go back")
+    menu_main
+    ;;
+  esac
+
+}
+
+case $1 in
+"wifi")
+  menu_wifi
+  ;;
+"blue")
+  menu_blue
+  ;;
+"mon")
+  menu_mon
+  ;;
+"tablet")
+  menu_tablet
+  ;;
+"light")
+  menu_light
+  ;;
+"energy")
+  menu_energy
+  ;;
+"theme")
+  menu_theme
+  ;;
+"usb")
+  menu_usb
+  ;;
+"updates")
+  menu_updates
+  ;;
+*)
+  menu_main
+  ;;
+esac
+
+# 󰟵    󰤫 󰤯 󰂯 󰕾 󰍹 󰓶   󰐦   󱊞      󰾰 󰂱 󰂯 󰂲 󰂰 󰓃    󰸈 󰋫 󰈙 󰕓 
