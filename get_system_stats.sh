@@ -1,5 +1,5 @@
 # Initialize variables
-power_stat_factor="1.4"
+power_stat_factor="1"
 total_power_draw=0
 total_remaining_capacity=0
 total_capacity=0
