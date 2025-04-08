@@ -49,7 +49,11 @@ if [ "$battery_count" -gt 0 ]; then
   # Calculate combined time remaining in seconds (total remaining capacity divided by total power draw)
   if [ "$total_power_draw" -gt 0 ]; then
     # Remaining time in seconds
-    remaining_time_seconds=$(echo "scale=1; $total_remaining_capacity/($total_power_draw * $power_stat_factor)" | bc)
+    if $charging; then
+      remaining_time_seconds=$(echo "scale=1; ($total_capacity - $total_remaining_capacity)/($total_power_draw * $power_stat_factor)" | bc)
+    else
+      remaining_time_seconds=$(echo "scale=1; $total_remaining_capacity/($total_power_draw * $power_stat_factor)" | bc)
+    fi
   else
     remaining_time_seconds=0
   fi
