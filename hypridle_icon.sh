@@ -1,7 +1,7 @@
 icon_idle=""
 if [[ $(systemctl --user is-active hypridle.service) == "active" ]]; then
-  icon_idle="󱣴"
+  icon_idle=" "
 else
-  icon_idle=""
+  icon_idle="󱣴 "
 fi
-echo "{\"text\": \" $icon_idle \" }"
+echo "{\"text\": \"$icon_idle\" }"

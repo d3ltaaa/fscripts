@@ -6,6 +6,7 @@ total_capacity=0
 battery_count=0
 charging=false
 desktop=true
+governor_path="/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 
 # Define battery icons
 CHARGING_ICONS=("󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅")
@@ -77,6 +78,14 @@ if [ "$battery_count" -gt 0 ]; then
   battery_string="$battery_percentage% $icon"
 fi
 
+if [[ "$(cat $governor_path)" == "performance" ]]; then
+  governor_string="󰓅";
+elif [[ "$(cat $governor_path)" == "powersave" ]]; then
+  governor_string="󰾆";
+else
+  governor_string="?";
+fi
+
 # echo $total_remaining_capacity / $total_capacity = $battery_percentage
 
 # Get CPU usage
@@ -107,7 +116,7 @@ fi
 # echo "{\"text\": \"󰘚 CPU: $CPU_USAGE |  RAM: $RAM_USED/$RAM_TOTAL | 🌡️ Temp: $TEMP | 🔋 Power: $POWER\"}"
 # echo "{\"text\": \" \", \"tooltip\": \"$ram_string\n$cpu_string\n$power_string\"}"
 if $desktop; then
-  echo "{\"text\": \"$ram_string    $cpu_string\"}"
+  echo "{\"text\": \"$governor_string    $ram_string    $cpu_string\"}"
 else
-  echo "{\"text\": \"$power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\" }"
+  echo "{\"text\": \"$governor_string    $power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\" }"
 fi
