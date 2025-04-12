@@ -4,6 +4,7 @@ total_power_draw=0
 total_remaining_capacity=0
 total_capacity=0
 battery_count=0
+stop_hypridle=false
 charging=false
 desktop=true
 
@@ -73,6 +74,19 @@ if [ "$battery_count" -gt 0 ]; then
     icon=${CHARGING_ICONS[$icon_index]}
   else
     icon=${DEFAULT_ICONS[$icon_index]}
+
+    # set idle conditions
+    if [[ "$(echo "$power_draw_watts > $IDLE_WATTS" | bc)" != "0" ]]; then
+      # stop hypridle
+      if [[ "$(systemctl --user is-active hypridle.service)" == "active" ]]; then
+        systemctl --user stop hypridle
+      fi
+    else
+      if [[ "$(systemctl --user is-active hypridle.service)" == "inactive" ]]; then
+        systemctl --user start hypridle
+      fi
+    fi
+
   fi
   battery_string="$battery_percentage% $icon"
 fi
