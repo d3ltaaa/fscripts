@@ -1,21 +1,45 @@
+#!/run/current-system/sw/bin/bash
+
 CONFIG_PATH="/var/tmp/scr_light/current_red_value"
 
-connection_type=$(hyprctl monitors all | grep Monitor)
+monitor_count=$(hyprctl monitors all | grep Monitor | wc -l)
 
-if [ ! -f $CONFIG_PATH ]; then
-  mkdir -p $(dirname $CONFIG_PATH)
-  echo "6" >$CONFIG_PATH
+if [[ $(echo $MONITOR_TYPE ) == "internal" ]]; then
+  cmd_more="brillo -A 10"
+  cmd_less="brillo -U 10"
+  cmd_max="brillo -S 100"
+  cmd_min="brillo -S 0"
+elif [[ $(echo $MONITOR_TYPE) == "external" ]]; then
+  cmd_max=""
+  cmd_min=""
+  cmd_more=""
+  cmd_less=""
+  for i in $(seq 1 $monitor_count); do
+    cmd_more+="ddcutil --display $i setvcp 10 + 10"
+    cmd_less+="ddcutil --display $i setvcp 10 - 10"
+    cmd_max+="ddcutil --display $i setvcp 10 100"
+    cmd_min+="ddcutil --display $i setvcp 10 0"
+    if [[ $i != $monitor_count ]]; then
+      cmd_max+=" && "
+      cmd_min+=" && "
+      cmd_more+=" && "
+      cmd_less+=" && "
+    fi
+  done
 fi
+
+echo $cmd_more
+echo $cmd_less
 
 light_down() {
 
   case "$1" in
   "max")
-    brillo -S 0
+    eval $cmd_min
     exit 0
     ;;
   *)
-    brillo -U -10
+    eval $cmd_less
     exit 0
     ;;
   esac
@@ -25,11 +49,11 @@ light_up() {
 
   case $1 in
   "max")
-    brillo -S 100
+    eval $cmd_max
     exit 0
     ;;
   *)
-    brillo -A 10
+    eval $cmd_more
     exit 0
     ;;
   esac
