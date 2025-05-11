@@ -3,4 +3,4 @@ if [[ $(systemctl is-active wg-quick-wg0.service) == "active" ]]; then
 else
   foot -e systemctl start wg-quick-wg0.service
 fi
-pkill -RTMIN+6 waybar
+pkill -RTMIN+7 waybar
