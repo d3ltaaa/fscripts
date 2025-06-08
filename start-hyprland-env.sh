@@ -1,6 +1,6 @@
 hyprlock &
 swww-daemon &
-swww img ~/.config/wall/paper
+swww img ~/.config/wall/paper &
 
-hyprpm restore
+hyprpm reload -n
 waybar &
