@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/run/current-system/sw/bin/bash
 
 
 # todo: applications with same name like firefox firefox lead to errors
@@ -36,7 +36,7 @@ menu_vol () {
             *)
                 #get corresponding index
                 index=$(pulsemixer --list-sinks | grep "$further_further_selected" | grep Sink: | awk '{print $3}' | cut -d'-' -f2 | sed 's/,//')
-                pacmd set-default-sink $index 
+                pacmd set-default-sink $index
                 menu_vol
                 ;;
         esac
@@ -105,11 +105,11 @@ menu_vol () {
                         break
                         ;;
                 esac
-                        
+
 
 
             done
-            
+
             if [[ "$further_further_selected" == "Go back" ]]; then
                 menu_vol
             fi
@@ -170,7 +170,7 @@ menu_vol () {
 
                             application_volume="$(pulsemixer --id "$sink_input_id" --get-volume | awk '{print $1}')%"
 
-                            
+
                             if [[ "$(pulsemixer --id "$sink_input_id" --get-mute)" == "1" ]]; then
                                     application_volume="M"
                             fi
