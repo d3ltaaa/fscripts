@@ -882,9 +882,9 @@ menu_energy() {
 
   # Depending on which option was selected, perform the corresponding system action
   case $selected in
-  "  Reset") foot -e sudo auto-cpufreq --force reset ;;
-  "󱧥  Powersave") foot -e sudo auto-cpufreq --force powersave ;;
-  "󰓅  Performance") foot -e sudo auto-cpufreq --force performance ;;
+  "  Reset") pkexec auto-cpufreq --force reset ;;
+  "󱧥  Powersave") pkexec auto-cpufreq --force powersave ;;
+  "󰓅  Performance") pkexec auto-cpufreq --force performance ;;
   "  Go back") menu_main ;;
   esac
 }
