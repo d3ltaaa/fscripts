@@ -12,6 +12,14 @@ governor_path="/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 CHARGING_ICONS=("󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅")
 DEFAULT_ICONS=("󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹")
 
+if [[ "$(cat $governor_path)" == "performance" ]]; then
+  governor_string="󰓅";
+elif [[ "$(cat $governor_path)" == "powersave" ]]; then
+  governor_string="󰾆";
+else
+  governor_string="?";
+fi
+
 # Loop through possible battery files (BAT0, BAT1, etc.)
 for battery in /sys/class/power_supply/BAT*; do
   # Check if the battery exists and is readable
@@ -60,7 +68,7 @@ if [ "$battery_count" -gt 0 ]; then
   fi
 
   # Print the output
-  power_string="${power_draw_watts}W 󰾅    ${remaining_time_seconds}H "
+  power_string="${power_draw_watts}W $governor_string    ${remaining_time_seconds}H "
 
   battery_percentage=$((100 * $total_remaining_capacity / total_capacity))
   # Determine icon index (0-9 scale)
@@ -76,14 +84,6 @@ if [ "$battery_count" -gt 0 ]; then
     icon=${DEFAULT_ICONS[$icon_index]}
   fi
   battery_string="$battery_percentage% $icon"
-fi
-
-if [[ "$(cat $governor_path)" == "performance" ]]; then
-  governor_string="󰓅";
-elif [[ "$(cat $governor_path)" == "powersave" ]]; then
-  governor_string="󰾆";
-else
-  governor_string="?";
 fi
 
 # echo $total_remaining_capacity / $total_capacity = $battery_percentage
@@ -116,7 +116,7 @@ fi
 # echo "{\"text\": \"󰘚 CPU: $CPU_USAGE |  RAM: $RAM_USED/$RAM_TOTAL | 🌡️ Temp: $TEMP | 🔋 Power: $POWER\"}"
 # echo "{\"text\": \" \", \"tooltip\": \"$ram_string\n$cpu_string\n$power_string\"}"
 if $desktop; then
-  echo "{\"text\": \"$governor_string    $ram_string    $cpu_string\"}"
+  echo "{\"text\": \"$ram_string    $cpu_string\"}"
 else
-  echo "{\"text\": \"$governor_string    $power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\" }"
+  echo "{\"text\": \"$power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\" }"
 fi
