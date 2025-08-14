@@ -12,6 +12,17 @@ governor_path="/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 CHARGING_ICONS=("󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅")
 DEFAULT_ICONS=("󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹")
 
+format_string() {
+  local content="$1"
+  local width="$2"
+  local length="${#content}"
+  if [ $length -lt $width ]; then
+    printf "%*s%s" $((width - length)) "" "$content"
+  else
+    printf "%s" "$content"
+  fi
+}
+
 if [[ "$(cat $governor_path)" == "performance" ]]; then
   governor_string="󰓅";
 elif [[ "$(cat $governor_path)" == "powersave" ]]; then
@@ -68,7 +79,9 @@ if [ "$battery_count" -gt 0 ]; then
   fi
 
   # Print the output
-  power_string="${power_draw_watts}W $governor_string    ${remaining_time_seconds}H "
+  fixed_power_draw_watts=$(format_string "$power_draw_watts" 4)
+  fixed_remaining_time_seconds=$(format_string "$remaining_time_seconds" 4)
+  power_string="${fixed_power_draw_watts}W $governor_string    ${remaining_time_seconds}H "
 
   battery_percentage=$((100 * $total_remaining_capacity / total_capacity))
   # Determine icon index (0-9 scale)
@@ -83,6 +96,7 @@ if [ "$battery_count" -gt 0 ]; then
   else
     icon=${DEFAULT_ICONS[$icon_index]}
   fi
+  fixed_battery_string=$(format_string "$fixed_battery_string" 3)
   battery_string="$battery_percentage% $icon"
 fi
 
@@ -115,8 +129,10 @@ fi
 # Output JSON for Waybar
 # echo "{\"text\": \"󰘚 CPU: $CPU_USAGE |  RAM: $RAM_USED/$RAM_TOTAL | 🌡️ Temp: $TEMP | 🔋 Power: $POWER\"}"
 # echo "{\"text\": \" \", \"tooltip\": \"$ram_string\n$cpu_string\n$power_string\"}"
+
 if $desktop; then
   echo "{\"text\": \"$ram_string    $cpu_string\"}"
 else
   echo "{\"text\": \"$power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\" }"
 fi
+
