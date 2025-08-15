@@ -1010,7 +1010,7 @@ menu_updates() {
     foot -e bash -c "nix flake update --flake /home/falk/nix-conf scripts && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "Build System")
-    foot -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nix-conf#T480 --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
+    foot -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nix-conf#$(hostname) --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "  Go back")
     menu_main
