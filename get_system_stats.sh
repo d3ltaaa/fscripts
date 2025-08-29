@@ -62,17 +62,18 @@ for battery in /sys/class/power_supply/BAT*; do
       charging=true
     fi
     charge_now=$(cat $battery/charge_now)
+    charge_full=$(cat $battery/charge_full)
     voltage_now=$(cat $battery/voltage_now)
 
     # Convert to microwatt-hours
-    full_capacity=$(echo "scale=0; ($charge_now * $voltage_now) / 1000000" | bc)
+    full_capacity=$(echo "scale=0; ($charge_full * $voltage_now) / 1000000" | bc)
     remaining_capacity=$(echo "scale=0; ($charge_now * $voltage_now) / 1000000" | bc)
 
     total_capacity=$((total_capacity + full_capacity))
     total_remaining_capacity=$((total_remaining_capacity + remaining_capacity))
 
   fi
-    battery_count=$((battery_count + 1))
+  battery_count=$((battery_count + 1))
 done
 
 # If we found at least one battery, calculate and print the results
@@ -98,7 +99,7 @@ if [ "$battery_count" -gt 0 ]; then
   fixed_remaining_time_seconds=$(format_string "$remaining_time_seconds" 4)
   power_string="${fixed_power_draw_watts}W $governor_string    ${remaining_time_seconds}H "
 
-  battery_percentage=$((100 * $total_remaining_capacity / total_capacity))
+  battery_percentage=$((100 * $total_remaining_capacity / $total_capacity))
   # Determine icon index (0-9 scale)
   icon_index=$((battery_percentage / 10))
   if [[ $icon_index -gt 9 ]]; then
