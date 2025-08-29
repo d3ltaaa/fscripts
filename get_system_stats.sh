@@ -34,13 +34,15 @@ fi
 # Loop through possible battery files (BAT0, BAT1, etc.)
 for battery in /sys/class/power_supply/BAT*; do
   # Check if the battery exists and is readable
+  desktop=false
+
   if [ -f "$battery/power_now" ]; then
     power_now=$(cat "$battery/power_now")
     total_power_draw=$((total_power_draw + power_now))
   elif [ -f "$battery/current_now" ] && [ -f "$battery/voltage_now" ]; then
-    current_now=$(cat $battery/current_now)
-    voltage_now=$(cat $battery/voltage_now)
-    power_now=$(($current_now * $voltage_now))
+    current_now=$(cat "$battery/current_now")
+    voltage_now=$(cat "$battery/voltage_now")
+    power_now=$(echo "scale=0; ($current_now * $voltage_now) / 1000000" | bc)
     total_power_draw=$((total_power_draw + power_now))
   fi
 
@@ -54,10 +56,23 @@ for battery in /sys/class/power_supply/BAT*; do
     total_capacity=$((total_capacity + full_capacity))
     total_remaining_capacity=$((total_remaining_capacity + remaining_capacity))
 
-    desktop=false
     # Update battery count
-    battery_count=$((battery_count + 1))
+  elif [ -f "$battery/charge_full" ] && [ -f "$battery/charge_now" ] && [ -f "$battery/status" ]; then
+    if [[ "$(cat $battery/status)" == "Charging" ]]; then
+      charging=true
+    fi
+    charge_now=$(cat $battery/charge_now)
+    voltage_now=$(cat $battery/voltage_now)
+
+    # Convert to microwatt-hours
+    full_capacity=$(echo "scale=0; ($charge_now * $voltage_now) / 1000000" | bc)
+    remaining_capacity=$(echo "scale=0; ($charge_now * $voltage_now) / 1000000" | bc)
+
+    total_capacity=$((total_capacity + full_capacity))
+    total_remaining_capacity=$((total_remaining_capacity + remaining_capacity))
+
   fi
+    battery_count=$((battery_count + 1))
 done
 
 # If we found at least one battery, calculate and print the results
