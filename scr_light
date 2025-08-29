@@ -5,10 +5,14 @@ CONFIG_PATH="/var/tmp/scr_light/current_red_value"
 monitor_count=$(hyprctl monitors all | grep Monitor | wc -l)
 
 if [[ $(echo $MONITOR_TYPE ) == "internal" ]]; then
-  cmd_more="brillo -A 10"
-  cmd_less="brillo -U 10"
-  cmd_max="brillo -S 100"
-  cmd_min="brillo -S 0"
+  # cmd_more="brillo -A 10"
+  # cmd_less="brillo -U 10"
+  # cmd_max="brillo -S 100"
+  # cmd_min="brillo -S 0"
+  cmd_more="brightnessctl set +10%"
+  cmd_less="brightnessctl set 10%-"
+  cmd_max="brightnessctl set 100%"
+  cmd_min="brightnessctl set 0%"
 elif [[ $(echo $MONITOR_TYPE) == "external" ]]; then
   cmd_max=""
   cmd_min=""
