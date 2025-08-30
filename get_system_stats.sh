@@ -39,11 +39,13 @@ for battery in /sys/class/power_supply/BAT*; do
   if [ -f "$battery/power_now" ]; then
     power_now=$(cat "$battery/power_now")
     total_power_draw=$((total_power_draw + power_now))
+    battery_count=$((battery_count + 1))
   elif [ -f "$battery/current_now" ] && [ -f "$battery/voltage_now" ]; then
     current_now=$(cat "$battery/current_now")
     voltage_now=$(cat "$battery/voltage_now")
     power_now=$(echo "scale=0; ($current_now * $voltage_now) / 1000000" | bc)
     total_power_draw=$((total_power_draw + power_now))
+    battery_count=$((battery_count + 1))
   fi
 
   if [ -f "$battery/energy_full" ] && [ -f "$battery/energy_now" ] && [ -f "$battery/status" ]; then
@@ -73,7 +75,6 @@ for battery in /sys/class/power_supply/BAT*; do
     total_remaining_capacity=$((total_remaining_capacity + remaining_capacity))
 
   fi
-  battery_count=$((battery_count + 1))
 done
 
 # If we found at least one battery, calculate and print the results
