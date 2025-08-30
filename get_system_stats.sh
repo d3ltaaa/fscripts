@@ -151,6 +151,6 @@ fi
 if $desktop; then
   echo "{\"text\": \"$ram_string    $cpu_string\", \"tooltip\": \"Brightness: $(get_brightness.sh)%\"}"
 else
-  echo "{\"text\": \"$power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\nBrightness: $(get_brightness.sh)%\" }"
+  echo "{\"text\": \"$power_string    $battery_string\", \"tooltip\": \"$ram_string\n\n$cpu_string\n\nBrightness: $(get_brightness.sh)%\" }"
 fi
 
