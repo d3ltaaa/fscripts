@@ -172,7 +172,7 @@ menu_wifi() {
 
   # options=("Internet ($status)" "Wifi list" "  Go back")
 
-  options=("  Wired - ($status_lan)" "  Wifi - ($status_wifi)" "  Go back")
+  options=("  Wired - ($status_lan)" "  Wifi - ($status_wifi)" "󰣆  TUI" "  Go back")
 
   selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
 
@@ -245,6 +245,9 @@ menu_wifi() {
       menu_wifi
       ;;
     esac
+    ;;
+  "󰣆  TUI")
+    foot -e impala
     ;;
   "  Go back")
     menu_main
