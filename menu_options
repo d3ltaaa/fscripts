@@ -524,7 +524,7 @@ menu_vol() {
     default_volume="$(pulsemixer --get-volume | awk '{print $1}')%"
   fi
 
-  options=("󰓃  Output: $default_sink" "  Volume: $default_volume" "󰣆  Applications" "  Go back")
+  options=("󰓃  Output: $default_sink" "  Volume: $default_volume" "󰣆  Applications" "󰣆  GUI" "  Go back")
 
   selected=$(printf '%s\n' "${options[@]}" | ${menu_alt})
 
@@ -668,6 +668,9 @@ menu_vol() {
 
     ;;
 
+  "󰣆  GUI")
+    pavucontrol
+    ;;
   "  Go back")
     menu_main
     ;;
