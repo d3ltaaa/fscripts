@@ -258,7 +258,7 @@ menu_blue() {
   bluetoothctl power on
   bluetoothctl agent on
 
-  options_blue_menu=("󰾰  Show devices" "󰂱  Connect devices" "  Go back")
+  options_blue_menu=("󰾰  Show devices" "󰂱  Connect devices" "󰣆  GUI" "  Go back")
 
   selected_blue_menu=$(printf '%s\n' "${options_blue_menu[@]}" | ${menu_alt})
 
@@ -468,6 +468,9 @@ menu_blue() {
 
     esac
 
+    ;;
+  "󰣆  GUI")
+    flatpak run io.emeric.toolblex
     ;;
 
   "  Go back")
