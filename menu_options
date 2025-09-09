@@ -405,6 +405,9 @@ case $1 in
 "blue")
   menu_blue
   ;;
+"vol")
+  menu_vol
+  ;;
 "mon")
   menu_mon
   ;;
