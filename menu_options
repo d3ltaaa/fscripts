@@ -44,15 +44,15 @@ menu_main() {
 }
 
 menu_wifi() {
-  hyprctl dispatch exec "[float;size 800 500] $terminal -e impala"
+  hyprctl dispatch exec "[float;size 800 500] $terminal impala"
 }
 
 menu_blue() {
-  hyprctl dispatch exec "[float;size 800 500] $terminal -e bluetui"
+  hyprctl dispatch exec "[float;size 800 500] $terminal bluetui"
 }
 
 menu_vol() {
-  hyprctl dispatch exec "[float;size 800 500] $terminal -e pulsemixer"
+  hyprctl dispatch exec "[float;size 800 500] $terminal pulsemixer"
 }
 
 menu_tablet() {
