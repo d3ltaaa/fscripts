@@ -5,6 +5,7 @@ menu="rofi -dmenu -i"
 menu_alt=$menu
 notification_normal="dunstify -u normal"
 notification_urgent="dunstify -u critical"
+terminal="$(echo $TERMINAL)"
 
 menu_main() {
   # Define first layer
@@ -43,15 +44,15 @@ menu_main() {
 }
 
 menu_wifi() {
-  hyprctl dispatch exec "[float;size 800 500] foot -e impala"
+  hyprctl dispatch exec "[float;size 800 500] $terminal -e impala"
 }
 
 menu_blue() {
-  hyprctl dispatch exec "[float;size 800 500] foot -e bluetui"
+  hyprctl dispatch exec "[float;size 800 500] $terminal -e bluetui"
 }
 
 menu_vol() {
-  hyprctl dispatch exec "[float;size 800 500] foot -e pulsemixer"
+  hyprctl dispatch exec "[float;size 800 500] $terminal -e pulsemixer"
 }
 
 menu_tablet() {
@@ -383,13 +384,13 @@ menu_updates() {
 
   case $selected in
   "Edit Config")
-    foot -e bash -c "cd /home/falk/nix-conf && nvim"
+    $terminal -e bash -c "cd /home/falk/nix-conf && nvim"
     ;;
   "Update Sources")
-    foot -e bash -c "nix flake update --flake /home/falk/nix-conf scripts && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
+    $terminal -e bash -c "nix flake update --flake /home/falk/nix-conf scripts && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "Build System")
-    foot -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nix-conf#$(hostname) --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
+    $terminal -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nix-conf#$(hostname) --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "  Go back")
     menu_main
