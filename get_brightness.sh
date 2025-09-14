@@ -1,12 +1,6 @@
 #!/run/current-system/sw/bin/bash
 
-if [ $MONITOR_TYPE == "external" ]; then
-  # system uses ddcutil
-  brightness=$(ddcutil getvcp --display 1 10 | grep -oP 'current value =\s*\K[0-9]+')
-  if [ -n "$brightness" ]; then
-    echo "$brightness"
-  fi
-elif [ $MONITOR_TYPE == "internal" ]; then
+if [ $MONITOR_TYPE == "internal" ]; then
   # system uses brightnessctl
   brightness=$(brightnessctl get)
   max_brightness=$(brightnessctl max)
