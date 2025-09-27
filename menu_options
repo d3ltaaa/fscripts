@@ -92,8 +92,22 @@ menu_mon() {
 }
 
 menu_wall() {
-  hyprctl dispatch exec "[float;size 1000 1000] waypaper"
+  # hyprctl dispatch exec "[float;size 1000 1000] waypaper"
+  output="$(waypaper)"
 
+  # Extract the filename using grep and sed
+  selected_file=$(echo "$output" | grep "Selected file:" | sed 's/Selected file: //')
+
+  # Ensure the destination directory exists
+  mkdir -p ~/.config/wall
+
+  # Remove any existing symlink or file
+  rm -f ~/.config/wall/paper
+
+  # Create the new symlink
+  ln -s "$selected_file" ~/.config/wall/paper
+
+  echo "Symlink created: ~/.config/wall/paper -> $selected_file"
 }
 
 menu_light() {
