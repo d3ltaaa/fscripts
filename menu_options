@@ -9,7 +9,7 @@ terminal="$(echo $TERMINAL)"
 
 menu_main() {
   # Define first layer
-  options=(" Wifi" "󰂯 Bluetooth" "󰕾 Audio" "󰍹 Monitors" " Light" "󰓅 Energy-Mode" "󱊞 USB" " Nixos Config" "󰅙 Close")
+  options=(" Wifi" "󰂯 Bluetooth" "󰕾 Audio" "󰍹 Monitors" " Wallpaper" " Light" "󰓅 Energy-Mode" "󱊞 USB" " Nixos Config" "󰅙 Close")
 
   # display options
   selected=$(printf '%s\n' "${options[@]}" | ${menu} " Settings")
@@ -25,7 +25,10 @@ menu_main() {
     menu_vol
     ;;
   "󰍹 Monitors")
-    nwg-displays
+    menu_mon
+    ;;
+  " Wallpaper")
+    menu_wall
     ;;
   " Light")
     menu_light
@@ -82,6 +85,15 @@ menu_tablet() {
     menu_options
     ;;
   esac
+}
+
+menu_mon() {
+  hyprctl dispatch exec "[float;size 1000 700] nwg-displays"
+}
+
+menu_wall() {
+  hyprctl dispatch exec "[float;size 1000 1000] waypaper"
+
 }
 
 menu_light() {
@@ -384,13 +396,13 @@ menu_updates() {
 
   case $selected in
   "Edit Config")
-    $terminal -e bash -c "cd /home/falk/nix-conf && nvim"
+    $terminal -e bash -c "cd /home/falk/nixos-config && nvim"
     ;;
   "Update Sources")
-    $terminal -e bash -c "nix flake update --flake /home/falk/nix-conf scripts && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
+    $terminal -e bash -c "nix flake update --flake /home/falk/nixos-config scripts && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "Build System")
-    $terminal -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nix-conf#$(hostname) --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
+    $terminal -e bash -c "sudo nixos-rebuild switch --flake /home/falk/nixos-config#$(hostname) --impure && echo \"==> Completed\" || echo \"==> Failed\"; read -p \"Press Key to Exit\" ans"
     ;;
   "  Go back")
     menu_main
