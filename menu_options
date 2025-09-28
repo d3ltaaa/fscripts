@@ -96,7 +96,7 @@ menu_wall() {
   output="$(waypaper)"
 
   # Extract the filename using grep and sed
-  selected_file=$(echo "$output" | grep "Selected file:" | sed 's/Selected file: //')
+  selected_file=$(echo "$output" | grep "Selected file:" | tail -n 1 | sed 's/Selected file: //')
 
   # Ensure the destination directory exists
   mkdir -p ~/.config/wall
