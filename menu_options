@@ -183,9 +183,9 @@ menu_energy() {
 
   # Depending on which option was selected, perform the corresponding system action
   case $selected in
-  "  Reset") pkexec auto-cpufreq --force reset ;;
-  "󱧥  Powersave") pkexec auto-cpufreq --force powersave ;;
-  "󰓅  Performance") pkexec auto-cpufreq --force performance ;;
+  "  Reset")  hyprctl dispatch exec "[float;size 800 500] $terminal sudo auto-cpufreq --force reset" ;;
+  "󱧥  Powersave") hyprctl dispatch exec "[float;size 800 500] $terminal sudo auto-cpufreq --force powersave" ;;
+  "󰓅  Performance") hyprctl dispatch exec "[float;size 800 500] $terminal sudo auto-cpufreq --force performance" ;;
   "  Go back") menu_main ;;
   esac
 }
